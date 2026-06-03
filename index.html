@@ -49,7 +49,13 @@
             padding-bottom: 8px;
             margin-top: 30px;
         }
-        .vitals-grid {
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
@@ -62,7 +68,7 @@
             color: #2c3e50;
             font-size: 14px;
         }
-        input, textarea {
+        input, textarea, select {
             width: 100%;
             padding: 10px;
             border: 2px solid #bdc3c7;
@@ -71,7 +77,7 @@
             box-sizing: border-box;
             font-family: inherit;
         }
-        input:focus, textarea:focus {
+        input:focus, textarea:focus, select:focus {
             border-color: #3498db;
             outline: none;
         }
@@ -79,7 +85,7 @@
             height: 100px;
             resize: vertical;
         }
-        button {
+        .btn-primary {
             width: 100%;
             background-color: #3498db;
             color: white;
@@ -92,8 +98,24 @@
             transition: background 0.2s;
             margin-top: 10px;
         }
-        button:hover {
+        .btn-primary:hover {
             background-color: #2980b9;
+        }
+        .btn-success {
+            width: 100%;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+        .btn-success:hover {
+            background-color: #27ae60;
         }
         .dashboard-box {
             margin-top: 30px;
@@ -107,6 +129,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
+            margin-bottom: 20px;
         }
         th, td {
             padding: 12px;
@@ -125,6 +148,13 @@
             color: #e74c3c;
             font-weight: bold;
         }
+        .patient-summary-text {
+            background: white; 
+            padding: 15px; 
+            border-radius: 6px; 
+            border: 1px solid #edf2f7;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
@@ -135,8 +165,28 @@
             <h1>MediNarrate Pro</h1>
         </div>
 
-        <h2>1. Patient Vital Signs</h2>
-        <div class="vitals-grid">
+        <h2>1. Patient Information</h2>
+        <div class="grid-3">
+            <div>
+                <label for="patientName">Full Name:</label>
+                <input type="text" id="patientName" placeholder="e.g. John Doe">
+            </div>
+            <div>
+                <label for="patientAge">Age:</label>
+                <input type="number" id="patientAge" placeholder="e.g. 45">
+            </div>
+            <div>
+                <label for="patientGender">Gender:</label>
+                <select id="patientGender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+        </div>
+
+        <h2>2. Patient Vital Signs</h2>
+        <div class="grid-2">
             <div>
                 <label for="heartRate">Heart Rate (BPM):</label>
                 <input type="number" id="heartRate" placeholder="e.g. 72">
@@ -147,15 +197,17 @@
             </div>
         </div>
 
-        <h2>2. Consultation Notes</h2>
+        <h2>3. Consultation Notes</h2>
         <label for="rawNotes">Unstructured Text:</label>
         <textarea id="rawNotes" placeholder="Type clinical findings or symptoms here..."></textarea>
 
-        <button onclick="processClinicalData()">Analyze & Format Workspace</button>
+        <button class="btn-primary" onclick="processClinicalData()">Analyze & Format Workspace</button>
 
         <div id="dashboard" class="dashboard-box">
             <h2 style="margin-top:0; color:#2c3e50;">📋 Processed Medical Dashboard</h2>
             
+            <p id="metaDisplay" style="font-size: 15px; color: #34495e; margin-bottom: 20px;"></p>
+
             <h3>Vital Signs Summary</h3>
             <table>
                 <thead>
@@ -180,22 +232,30 @@
             </table>
 
             <h3>Clinical Narrative</h3>
-            <p id="outputTxt" style="line-height: 1.6; background: white; padding: 15px; border-radius: 6px; border: 1px solid #edf2f7;"></p>
+            <p id="outputTxt" class="patient-summary-text"></p>
+
+            <button class="btn-success" onclick="copyReport()">Copy Clinical Report</button>
         </div>
     </div>
 
     <script>
         function processClinicalData() {
+            const name = document.getElementById('patientName').value;
+            const age = document.getElementById('patientAge').value;
+            const gender = document.getElementById('patientGender').value;
             const hr = document.getElementById('heartRate').value;
             const temp = document.getElementById('temperature').value;
             const rawText = document.getElementById('rawNotes').value;
 
-            if (!hr || !temp || !rawText.trim()) {
-                alert("Please fill out the Vitals and Consultation Notes first!");
+            if (!name || !age || !hr || !temp || !rawText.trim()) {
+                alert("Please fill out all patient info, vitals, and notes first!");
                 return;
             }
 
-            // 1. Process Heart Rate Range
+            // Display Patient Metadata
+            document.getElementById('metaDisplay').innerHTML = `<strong>Patient:</strong> ${name} | <strong>Age:</strong> ${age} | <strong>Gender:</strong> ${gender}`;
+
+            // Process Heart Rate Range
             document.getElementById('valHR').innerText = hr + " BPM";
             const hrStatus = document.getElementById('statusHR');
             if (hr < 60 || hr > 100) {
@@ -206,7 +266,7 @@
                 hrStatus.className = "status-normal";
             }
 
-            // 2. Process Temperature Range
+            // Process Temperature Range
             document.getElementById('valTemp').innerText = temp + " °F";
             const tempStatus = document.getElementById('statusTemp');
             if (temp > 99.5) {
@@ -220,11 +280,26 @@
                 tempStatus.className = "status-normal";
             }
 
-            // 3. Process Text Narrative
-            document.getElementById('outputTxt').innerHTML = `<strong>Narrative:</strong> ${rawText}`;
+            // Process Text Narrative
+            document.getElementById('outputTxt').innerHTML = `<strong>Findings:</strong> ${rawText}`;
 
             // Show the dashboard box
             document.getElementById('dashboard').style.display = 'block';
+        }
+
+        function copyReport() {
+            const name = document.getElementById('patientName').value;
+            const age = document.getElementById('patientAge').value;
+            const gender = document.getElementById('patientGender').value;
+            const hr = document.getElementById('heartRate').value;
+            const temp = document.getElementById('temperature').value;
+            const notes = document.getElementById('rawNotes').value;
+
+            const textReport = `CLINICAL REPORT\n----------------\nPatient: ${name}\nAge: ${age}\nGender: ${gender}\n\nVITALS:\nHeart Rate: ${hr} BPM\nTemperature: ${temp} °F\n\nNARRATIVE:\n${notes}`;
+            
+            navigator.clipboard.writeText(textReport).then(() => {
+                alert("Clinical report copied to clipboard successfully!");
+            });
         }
     </script>
 
