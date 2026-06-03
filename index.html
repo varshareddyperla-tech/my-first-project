@@ -23,6 +23,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             max-width: 700px;
             width: 100%;
+            position: relative;
         }
         .header {
             text-align: center;
@@ -85,8 +86,13 @@
             height: 100px;
             resize: vertical;
         }
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
         .btn-primary {
-            width: 100%;
             background-color: #3498db;
             color: white;
             border: none;
@@ -96,10 +102,23 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.2s;
-            margin-top: 10px;
         }
         .btn-primary:hover {
             background-color: #2980b9;
+        }
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
         }
         .btn-success {
             width: 100%;
@@ -155,9 +174,30 @@
             border: 1px solid #edf2f7;
             line-height: 1.6;
         }
+        /* Custom Notification Toast Style */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #2ecc71;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(120%); }
+            to { transform: translateX(0); }
+        }
     </style>
 </head>
 <body>
+
+    <div id="toastNotification" class="toast">✓ Report Copied to Clipboard!</div>
 
     <div class="container">
         <div class="header">
@@ -201,7 +241,10 @@
         <label for="rawNotes">Unstructured Text:</label>
         <textarea id="rawNotes" placeholder="Type clinical findings or symptoms here..."></textarea>
 
-        <button class="btn-primary" onclick="processClinicalData()">Analyze & Format Workspace</button>
+        <div class="action-buttons">
+            <button class="btn-primary" onclick="processClinicalData()">Analyze & Format Workspace</button>
+            <button class="btn-secondary" onclick="clearForm()">Clear</button>
+        </div>
 
         <div id="dashboard" class="dashboard-box">
             <h2 style="margin-top:0; color:#2c3e50;">📋 Processed Medical Dashboard</h2>
@@ -229,6 +272,7 @@
                         <td id="statusTemp">-</td>
                     </tr>
                 </tbody>
+            </tbody>
             </table>
 
             <h3>Clinical Narrative</h3>
@@ -252,10 +296,8 @@
                 return;
             }
 
-            // Display Patient Metadata
             document.getElementById('metaDisplay').innerHTML = `<strong>Patient:</strong> ${name} | <strong>Age:</strong> ${age} | <strong>Gender:</strong> ${gender}`;
 
-            // Process Heart Rate Range
             document.getElementById('valHR').innerText = hr + " BPM";
             const hrStatus = document.getElementById('statusHR');
             if (hr < 60 || hr > 100) {
@@ -266,7 +308,6 @@
                 hrStatus.className = "status-normal";
             }
 
-            // Process Temperature Range
             document.getElementById('valTemp').innerText = temp + " °F";
             const tempStatus = document.getElementById('statusTemp');
             if (temp > 99.5) {
@@ -280,10 +321,7 @@
                 tempStatus.className = "status-normal";
             }
 
-            // Process Text Narrative
             document.getElementById('outputTxt').innerHTML = `<strong>Findings:</strong> ${rawText}`;
-
-            // Show the dashboard box
             document.getElementById('dashboard').style.display = 'block';
         }
 
@@ -298,8 +336,22 @@
             const textReport = `CLINICAL REPORT\n----------------\nPatient: ${name}\nAge: ${age}\nGender: ${gender}\n\nVITALS:\nHeart Rate: ${hr} BPM\nTemperature: ${temp} °F\n\nNARRATIVE:\n${notes}`;
             
             navigator.clipboard.writeText(textReport).then(() => {
-                alert("Clinical report copied to clipboard successfully!");
+                const toast = document.getElementById('toastNotification');
+                toast.style.display = 'block';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 3000);
             });
+        }
+
+        function clearForm() {
+            document.getElementById('patientName').value = '';
+            document.getElementById('patientAge').value = '';
+            document.getElementById('patientGender').value = 'Male';
+            document.getElementById('heartRate').value = '';
+            document.getElementById('temperature').value = '';
+            document.getElementById('rawNotes').value = '';
+            document.getElementById('dashboard').style.display = 'none';
         }
     </script>
 
