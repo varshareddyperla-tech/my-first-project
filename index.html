@@ -21,7 +21,7 @@
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            max-width: 600px;
+            max-width: 700px;
             width: 100%;
         }
         .header {
@@ -42,31 +42,46 @@
             font-weight: bold;
             display: inline-block;
         }
+        h2 {
+            color: #34495e;
+            font-size: 18px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+            margin-top: 30px;
+        }
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
         label {
             display: block;
             font-weight: bold;
-            margin-bottom: 8px;
-            color: #34495e;
-        }
-        textarea {
-            width: 100%;
-            height: 120px;
-            padding: 12px;
-            border: 2px solid #bdc3c7;
-            border-radius: 8px;
+            margin-bottom: 6px;
+            color: #2c3e50;
             font-size: 14px;
-            resize: vertical;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 14px;
             box-sizing: border-box;
-            margin-bottom: 20px;
             font-family: inherit;
         }
-        textarea:focus {
+        input:focus, textarea:focus {
             border-color: #3498db;
             outline: none;
         }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
         button {
             width: 100%;
-            background-color: #2ecc71;
+            background-color: #3498db;
             color: white;
             border: none;
             padding: 14px;
@@ -75,21 +90,40 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.2s;
+            margin-top: 10px;
         }
         button:hover {
-            background-color: #27ae60;
+            background-color: #2980b9;
         }
-        .output-box {
+        .dashboard-box {
             margin-top: 30px;
-            padding: 15px;
+            padding: 20px;
             background-color: #f8f9fa;
-            border-left: 4px solid #3498db;
-            border-radius: 4px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
             display: none;
         }
-        .output-box h3 {
-            margin-top: 0;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #eaeded;
             color: #2c3e50;
+        }
+        .status-normal {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .status-alert {
+            color: #e74c3c;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -97,39 +131,100 @@
 
     <div class="container">
         <div class="header">
-            <span class="badge">CLINICAL DOCUMENTATION ASSISTANT</span>
-            <h1>MediNarrate</h1>
+            <span class="badge">CLINICAL WORKSPACE</span>
+            <h1>MediNarrate Pro</h1>
         </div>
 
-        <label for="rawNotes">Enter Patient Consultation Notes:</label>
-        <textarea id="rawNotes" placeholder="Example: Patient reports mild chest pain for 2 days. No shortness of breath. BP 120/80..."></textarea>
+        <h2>1. Patient Vital Signs</h2>
+        <div class="vitals-grid">
+            <div>
+                <label for="heartRate">Heart Rate (BPM):</label>
+                <input type="number" id="heartRate" placeholder="e.g. 72">
+            </div>
+            <div>
+                <label for="temperature">Temperature (°F):</label>
+                <input type="number" step="0.1" id="temperature" placeholder="e.g. 98.6">
+            </div>
+        </div>
 
-        <button onclick="generateNarrative()">Generate Professional Narrative</button>
+        <h2>2. Consultation Notes</h2>
+        <label for="rawNotes">Unstructured Text:</label>
+        <textarea id="rawNotes" placeholder="Type clinical findings or symptoms here..."></textarea>
 
-        <div id="outputContainer" class="output-box">
-            <h3>Formatted Clinical Narrative</h3>
-            <p id="outputTxt"></p>
+        <button onclick="processClinicalData()">Analyze & Format Workspace</button>
+
+        <div id="dashboard" class="dashboard-box">
+            <h2 style="margin-top:0; color:#2c3e50;">📋 Processed Medical Dashboard</h2>
+            
+            <h3>Vital Signs Summary</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Vital Sign</th>
+                        <th>Value</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Heart Rate</td>
+                        <td id="valHR">-</td>
+                        <td id="statusHR">-</td>
+                    </tr>
+                    <tr>
+                        <td>Body Temperature</td>
+                        <td id="valTemp">-</td>
+                        <td id="statusTemp">-</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Clinical Narrative</h3>
+            <p id="outputTxt" style="line-height: 1.6; background: white; padding: 15px; border-radius: 6px; border: 1px solid #edf2f7;"></p>
         </div>
     </div>
 
     <script>
-        function generateNarrative() {
+        function processClinicalData() {
+            const hr = document.getElementById('heartRate').value;
+            const temp = document.getElementById('temperature').value;
             const rawText = document.getElementById('rawNotes').value;
-            const outputContainer = document.getElementById('outputContainer');
-            const outputTxt = document.getElementById('outputTxt');
 
-            if (rawText.trim() === "") {
-                alert("Please enter some notes first!");
+            if (!hr || !temp || !rawText.trim()) {
+                alert("Please fill out the Vitals and Consultation Notes first!");
                 return;
             }
 
-            // A simple front-end formatting simulation for our assistant workspace
-            let structuredText = rawText
-                .replace(/(?:bp|blood pressure)\s*([\d\/]+)/gi, '<strong>Blood Pressure:</strong> $1')
-                .replace(/(?:pain)\s*/gi, '<strong>Symptom:</strong> Pain ');
+            // 1. Process Heart Rate Range
+            document.getElementById('valHR').innerText = hr + " BPM";
+            const hrStatus = document.getElementById('statusHR');
+            if (hr < 60 || hr > 100) {
+                hrStatus.innerText = "Abnormal";
+                hrStatus.className = "status-alert";
+            } else {
+                hrStatus.innerText = "Normal";
+                hrStatus.className = "status-normal";
+            }
 
-            outputTxt.innerHTML = `<strong>[Generated Narrative Summary]:</strong><br><br>` + structuredText;
-            outputContainer.style.display = 'block';
+            // 2. Process Temperature Range
+            document.getElementById('valTemp').innerText = temp + " °F";
+            const tempStatus = document.getElementById('statusTemp');
+            if (temp > 99.5) {
+                tempStatus.innerText = "Fever (High)";
+                tempStatus.className = "status-alert";
+            } else if (temp < 97.0) {
+                tempStatus.innerText = "Low";
+                tempStatus.className = "status-alert";
+            } else {
+                tempStatus.innerText = "Normal";
+                tempStatus.className = "status-normal";
+            }
+
+            // 3. Process Text Narrative
+            document.getElementById('outputTxt').innerHTML = `<strong>Narrative:</strong> ${rawText}`;
+
+            // Show the dashboard box
+            document.getElementById('dashboard').style.display = 'block';
         }
     </script>
 
